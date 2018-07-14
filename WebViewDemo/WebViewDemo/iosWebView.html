@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>HTML</title>
+		<script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+		
+	</head>
+	<body>
+		<h1>iOS与JS交互，相互传值</h1>
+		<p>在工作中会出现许多原生不好实现，但是h5的话就很简单，或者是原生做来不及就让前端写界面，原生就写个交互这种情况。这时候原生需要做的就是实现与js交互</p>
+		<p>下面这是一个交互的列子:</p>
+		<input type="text" name="input1" id="input1" value="" placeholder="输入值返回IOS原生"; />
+		<button id="button1">发送</button>
+
+		<script>
+	window.onerror = function(err) {
+		log('window.onerror: ' + err)
+	}
+
+    function setupWebViewJavascriptBridge(callback) {
+        if (window.WebViewJavascriptBridge) { return callback(WebViewJavascriptBridge); }
+        if (window.WVJBCallbacks) { return window.WVJBCallbacks.push(callback); }
+        window.WVJBCallbacks = [callback];
+        var WVJBIframe = document.createElement('iframe');
+        WVJBIframe.style.display = 'none';
+        WVJBIframe.src = 'https://__bridge_loaded__';
+        document.documentElement.appendChild(WVJBIframe);
+        setTimeout(function() { document.documentElement.removeChild(WVJBIframe) }, 0)
+    }
+
+    setupWebViewJavascriptBridge(function(bridge) {
+		var uniqueId = 1
+		function log(message, data) {
+			var log = document.getElementById('log')
+			var el = document.createElement('div')
+			el.className = 'logLine'
+			el.innerHTML = uniqueId++ + '. ' + message + ':<br/>' + JSON.stringify(data)
+			if (log.children.length) { log.insertBefore(el, log.children[0]) }
+			else { log.appendChild(el) }
+		}
+
+		bridge.registerHandler('testJavascriptHandler', function(data, responseCallback) {
+			log('ObjC', data)
+			var responseData = { 'JS':'IOS你好，很高兴我们能沟通了' }
+			log('JS', responseData)
+			responseCallback(responseData)
+		})
+
+		document.body.appendChild(document.createElement('br'))
+
+//		var callbackButton = document.getElementById('buttons').appendChild(document.createElement('button'))
+//		callbackButton.innerHTML = 'Fire testObjcCallback'
+//		callbackButton.onclick = function(e) {
+//			e.preventDefault()
+//			log('JS calling handler "getUserInfos"')
+//			bridge.callHandler('getUserInfos', {'foo': 'bar'}, function(response) {
+//				log('JS got response', response)
+//				responseCallback(response)
+//			})
+//		}
+
+		var button1 = document.getElementById('button1')
+		button1.onclick = function(e) {
+			var inputValue = document.getElementById("input1").value;
+//			log({'JS':'hai IOS，你知道我输入的是什么吗？'})
+			log('JS', 'hai IOS，你知道我输入的是什么吗？')
+			bridge.callHandler('getUserInfos', {'foo': inputValue}, function(response) {
+				log('JS：没错恭喜你回答正确', response)
+				responseCallback(response)
+			})
+			
+		}
+		
+
+			
+
+	})
+    
+	</script>
+	<div id='buttons'></div> <div id='log'></div>
+	</body>
+</html>
